@@ -19,7 +19,7 @@ public class RegisterForm extends JFrame {
 
     private void initUI() {
         setTitle("Health Tracker - Đăng ký");
-        setSize(500, 660);
+        setSize(500, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -42,7 +42,7 @@ public class RegisterForm extends JFrame {
 
         JPanel card = Theme.createCard();
         card.setLayout(null);
-        card.setBounds(40, 75, 420, 500);
+        card.setBounds(40, 75, 420, 550);
         main.add(card);
 
         int y = 20;

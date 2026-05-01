@@ -21,7 +21,7 @@ public class LoginForm extends JFrame {
 
     private void initUI() {
         setTitle("Health Tracker - Đăng nhập");
-        setSize(480, 580);
+        setSize(480, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
