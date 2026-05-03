@@ -44,6 +44,15 @@ CREATE TABLE sleep_log (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
  
+CREATE TABLE height_log (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    height_cm FLOAT NOT NULL,
+    log_date DATE NOT NULL,
+    note VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE goals (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,

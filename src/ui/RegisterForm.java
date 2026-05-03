@@ -5,6 +5,8 @@ import util.Theme;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 public class RegisterForm extends JFrame {
 
@@ -19,7 +21,7 @@ public class RegisterForm extends JFrame {
 
     private void initUI() {
         setTitle("Health Tracker - Đăng ký");
-        setSize(500, 700);
+        setSize(500, 750);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -42,18 +44,18 @@ public class RegisterForm extends JFrame {
 
         JPanel card = Theme.createCard();
         card.setLayout(null);
-        card.setBounds(40, 75, 420, 550);
+        card.setBounds(40, 75, 420, 600);
         main.add(card);
 
         int y = 20;
 
-        card.add(makeLabel("Họ và tên", 24, y)); y += 22;
+        card.add(makeLabel("Họ và tên (ít nhất 2 ký tự)", 24, y)); y += 22;
         txtFullName = makeField(); txtFullName.setBounds(24, y, 372, 40); card.add(txtFullName); y += 52;
 
-        card.add(makeLabel("Tên đăng nhập", 24, y)); y += 22;
+        card.add(makeLabel("Tên đăng nhập (4-20 ký tự, không dấu)", 24, y)); y += 22;
         txtUsername = makeField(); txtUsername.setBounds(24, y, 372, 40); card.add(txtUsername); y += 52;
 
-        card.add(makeLabel("Mật khẩu", 24, y)); y += 22;
+        card.add(makeLabel("Mật khẩu (ít nhất 6 ký tự)", 24, y)); y += 22;
         txtPassword = new JPasswordField(); styleField(txtPassword);
         txtPassword.setBounds(24, y, 372, 40); card.add(txtPassword); y += 52;
 
@@ -72,7 +74,7 @@ public class RegisterForm extends JFrame {
         cbGender.setForeground(Theme.TEXT_PRIMARY);
         cbGender.setBounds(211, y, 185, 40); card.add(cbGender); y += 52;
 
-        card.add(makeLabel("Chiều cao (cm)", 24, y)); y += 22;
+        card.add(makeLabel("Chiều cao (cm) — từ 50 đến 250", 24, y)); y += 22;
         txtHeight = makeField(); txtHeight.setText("170");
         txtHeight.setBounds(24, y, 372, 40); card.add(txtHeight); y += 52;
 
@@ -88,7 +90,7 @@ public class RegisterForm extends JFrame {
 
         JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
         backPanel.setOpaque(false);
-        backPanel.setBounds(0, 590, 500, 30);
+        backPanel.setBounds(0, 660, 500, 30);
         JLabel lbl = new JLabel("Đã có tài khoản?");
         lbl.setForeground(Theme.TEXT_SECONDARY);
         lbl.setFont(Theme.FONT_SMALL);
@@ -110,7 +112,7 @@ public class RegisterForm extends JFrame {
         JLabel lbl = new JLabel(text);
         lbl.setFont(Theme.FONT_SMALL);
         lbl.setForeground(Theme.TEXT_SECONDARY);
-        lbl.setBounds(x, y, 250, 20);
+        lbl.setBounds(x, y, 372, 20);
         return lbl;
     }
 
@@ -131,24 +133,64 @@ public class RegisterForm extends JFrame {
     }
 
     private void doRegister() {
-        String fullName = txtFullName.getText().trim();
-        String username = txtUsername.getText().trim();
-        String password = new String(txtPassword.getPassword());
-        String confirm  = new String(txtConfirm.getPassword());
-        String dob      = txtBirthDate.getText().trim();
-        String gender   = (String) cbGender.getSelectedItem();
-        String heightStr= txtHeight.getText().trim();
+        String fullName  = txtFullName.getText().trim();
+        String username  = txtUsername.getText().trim();
+        String password  = new String(txtPassword.getPassword());
+        String confirm   = new String(txtConfirm.getPassword());
+        String dob       = txtBirthDate.getText().trim();
+        String gender    = (String) cbGender.getSelectedItem();
+        String heightStr = txtHeight.getText().trim();
 
-        if (fullName.isEmpty() || username.isEmpty() || password.isEmpty()) {
-            lblError.setText("Vui lòng nhập đầy đủ thông tin!"); return;
+        // Validate họ tên
+        if (fullName.isEmpty()) {
+            lblError.setText("Vui lòng nhập họ và tên!"); return;
+        }
+        if (fullName.length() < 2) {
+            lblError.setText("Họ và tên phải có ít nhất 2 ký tự!"); return;
+        }
+
+        // Validate username
+        if (username.isEmpty()) {
+            lblError.setText("Vui lòng nhập tên đăng nhập!"); return;
+        }
+        if (username.length() < 4 || username.length() > 20) {
+            lblError.setText("Tên đăng nhập phải từ 4 đến 20 ký tự!"); return;
+        }
+        if (!username.matches("[a-zA-Z0-9_]+")) {
+            lblError.setText("Tên đăng nhập chỉ dùng chữ, số và dấu gạch dưới!"); return;
+        }
+
+        // Validate mật khẩu
+        if (password.isEmpty()) {
+            lblError.setText("Vui lòng nhập mật khẩu!"); return;
+        }
+        if (password.length() < 6) {
+            lblError.setText("Mật khẩu phải có ít nhất 6 ký tự!"); return;
         }
         if (!password.equals(confirm)) {
             lblError.setText("Mật khẩu xác nhận không khớp!"); return;
         }
-        float height;
-        try { height = Float.parseFloat(heightStr); }
-        catch (NumberFormatException e) { lblError.setText("Chiều cao không hợp lệ!"); return; }
 
+        // Validate ngày sinh
+        if (!isValidDate(dob)) {
+            lblError.setText("Ngày sinh không hợp lệ! Định dạng: yyyy-MM-dd"); return;
+        }
+
+        // Validate chiều cao
+        if (heightStr.isEmpty()) {
+            lblError.setText("Vui lòng nhập chiều cao!"); return;
+        }
+        float height;
+        try {
+            height = Float.parseFloat(heightStr);
+        } catch (NumberFormatException e) {
+            lblError.setText("Chiều cao phải là số (vd: 170)!"); return;
+        }
+        if (height < 50 || height > 250) {
+            lblError.setText("Chiều cao phải từ 50 đến 250 cm!"); return;
+        }
+
+        lblError.setText("");
         boolean ok = DAO.register(username, password, fullName, dob, gender, height);
         if (ok) {
             JOptionPane.showMessageDialog(this, "Đăng ký thành công! Hãy đăng nhập.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
@@ -158,4 +200,13 @@ public class RegisterForm extends JFrame {
             lblError.setText("Tên đăng nhập đã tồn tại hoặc lỗi!");
         }
     }
+
+    private boolean isValidDate(String s) {
+        if (s == null || s.trim().isEmpty()) return false;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setLenient(false);
+        try { sdf.parse(s.trim()); return true; }
+        catch (ParseException e) { return false; }
+    }
 }
+

@@ -8,6 +8,7 @@ import util.Theme;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class WeightPanel extends JPanel {
     private DefaultTableModel tableModel;
     private JTextField txtWeight, txtDate, txtNote;
     private JLabel lblBMI, lblCategory;
+    private List<WeightLog> currentList;
 
     public WeightPanel(User user) {
         this.user = user;
@@ -38,7 +40,7 @@ public class WeightPanel extends JPanel {
         // === INPUT CARD ===
         JPanel inputCard = Theme.createCard();
         inputCard.setLayout(null);
-        inputCard.setBounds(24, 68, 320, 400);
+        inputCard.setBounds(24, 68, 320, 440);
         add(inputCard);
 
         JLabel lblInput = new JLabel("Ghi cân nặng mới");
@@ -48,8 +50,8 @@ public class WeightPanel extends JPanel {
         inputCard.add(lblInput);
 
         // Weight
-        addLabel(inputCard, "Cân nặng (kg)", 16, 50);
-        txtWeight = makeField("0,00");
+        addLabel(inputCard, "Cân nặng (kg) — từ 20 đến 300 kg", 16, 50);
+        txtWeight = makeField("0.00");
         txtWeight.setBounds(16, 72, 285, 40);
         inputCard.add(txtWeight);
 
@@ -67,53 +69,48 @@ public class WeightPanel extends JPanel {
         inputCard.add(lblCategory);
 
         txtWeight.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                updateBMI();
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                updateBMI();
-            }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                updateBMI();
-            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { updateBMI(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { updateBMI(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { updateBMI(); }
         });
 
         // Date
-        addLabel(inputCard, "Ngày (yyyy-MM-dd)", 16, 172);
+        addLabel(inputCard, "Ngày (yyyy-MM-dd)", 16, 174);
         txtDate = makeField(new SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
-        txtDate.setBounds(16, 194, 285, 40);
+        txtDate.setBounds(16, 196, 285, 40);
         inputCard.add(txtDate);
 
         // Note
-        addLabel(inputCard, "Ghi chú", 16, 240);
+        addLabel(inputCard, "Ghi chú", 16, 244);
         txtNote = makeField("Ghi chú...");
-        txtNote.setBounds(16, 262, 285, 40);
+        txtNote.setBounds(16, 266, 285, 40);
         inputCard.add(txtNote);
 
         JButton btnAdd = Theme.createButton("  Lưu cân nặng", Theme.ACCENT_BLUE);
-        btnAdd.setBounds(16, 310, 285, 44);
+        btnAdd.setBounds(16, 320, 285, 44);
         inputCard.add(btnAdd);
         btnAdd.addActionListener(e -> saveWeight());
+
+        JButton btnDelete = Theme.createButton("  Xóa dòng đã chọn", new Color(220, 53, 69));
+        btnDelete.setBounds(16, 374, 285, 40);
+        inputCard.add(btnDelete);
+        btnDelete.addActionListener(e -> deleteSelected());
 
         // === TABLE ===
         JPanel tableCard = Theme.createCard();
         tableCard.setLayout(new BorderLayout());
-        tableCard.setBounds(360, 68, 480, 530);
+        tableCard.setBounds(360, 68, 500, 530);
         add(tableCard);
 
-        JLabel lblHist = new JLabel("  [=]  Lịch sử cân nặng");
+        JLabel lblHist = new JLabel("  [=]  Lịch sử cân nặng (chọn dòng để xóa)");
         lblHist.setFont(Theme.FONT_HEADING);
         lblHist.setForeground(Theme.TEXT_PRIMARY);
-        lblHist.setPreferredSize(new Dimension(480, 40));
+        lblHist.setPreferredSize(new Dimension(500, 40));
         tableCard.add(lblHist, BorderLayout.NORTH);
 
         String[] cols = { "Ngày", "Cân nặng (kg)", "BMI", "Phân loại", "Ghi chú" };
         tableModel = new DefaultTableModel(cols, 0) {
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
+            public boolean isCellEditable(int r, int c) { return false; }
         };
         table = new JTable(tableModel);
         styleTable();
@@ -146,32 +143,73 @@ public class WeightPanel extends JPanel {
     }
 
     private void saveWeight() {
-        try {
-            float weight = Float.parseFloat(txtWeight.getText().trim());
-            String date = txtDate.getText().trim();
-            String note = txtNote.getText().trim();
-            float h = user.getHeightCm() / 100f;
-            float bmi = weight / (h * h);
+        String weightStr = txtWeight.getText().trim();
+        String dateStr = txtDate.getText().trim();
+        String note = txtNote.getText().trim();
 
-            boolean ok = DAO.addWeight(user.getId(), weight, bmi, date, note);
-            if (ok) {
-                JOptionPane.showMessageDialog(this, "[v] Đã lưu cân nặng!", "Thành công",
-                        JOptionPane.INFORMATION_MESSAGE);
-                loadData();
-            } else {
-                JOptionPane.showMessageDialog(this, "[x] Lỗi khi lưu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+        // Validate cân nặng
+        if (weightStr.isEmpty()) {
+            showError("Vui lòng nhập cân nặng!"); return;
+        }
+        float weight;
+        try {
+            weight = Float.parseFloat(weightStr);
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Cân nặng không hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            showError("Cân nặng phải là số (vd: 65.5)!"); return;
+        }
+        if (weight < 20 || weight > 300) {
+            showError("Cân nặng phải từ 20 đến 300 kg!"); return;
+        }
+
+        // Validate ngày
+        if (!isValidDate(dateStr)) {
+            showError("Ngày không hợp lệ! Định dạng: yyyy-MM-dd (vd: 2025-05-01)"); return;
+        }
+
+        // Validate chiều cao
+        float h = user.getHeightCm() / 100f;
+        if (h <= 0) {
+            showError("Chưa có thông tin chiều cao! Hãy cập nhật chiều cao trước."); return;
+        }
+
+        float bmi = weight / (h * h);
+        boolean ok = DAO.addWeight(user.getId(), weight, bmi, dateStr, note);
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "[v] Đã lưu cân nặng!", "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE);
+            loadData();
+        } else {
+            JOptionPane.showMessageDialog(this, "[x] Lỗi khi lưu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteSelected() {
+        int row = table.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Hãy chọn một dòng trong bảng để xóa!", "Chưa chọn dòng", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc muốn xóa bản ghi cân nặng ngày " + tableModel.getValueAt(row, 0) + "?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        WeightLog selected = currentList.get(row);
+        boolean ok = DAO.deleteWeight(selected.getId());
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Đã xóa bản ghi!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            loadData();
+        } else {
+            JOptionPane.showMessageDialog(this, "Lỗi khi xóa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void loadData() {
         tableModel.setRowCount(0);
-        List<WeightLog> list = DAO.getWeightHistory(user.getId());
+        currentList = DAO.getWeightHistory(user.getId());
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        for (WeightLog w : list) {
-            tableModel.addRow(new Object[] {
+        for (WeightLog w : currentList) {
+            tableModel.addRow(new Object[]{
                     sdf.format(w.getLogDate()),
                     w.getWeightKg() + " kg",
                     String.format("%.1f", w.getBmi()),
@@ -179,6 +217,18 @@ public class WeightPanel extends JPanel {
                     w.getNote() != null ? w.getNote() : ""
             });
         }
+    }
+
+    private boolean isValidDate(String s) {
+        if (s == null || s.trim().isEmpty()) return false;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setLenient(false);
+        try { sdf.parse(s.trim()); return true; }
+        catch (ParseException e) { return false; }
+    }
+
+    private void showError(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
     }
 
     private void styleTable() {
@@ -197,13 +247,12 @@ public class WeightPanel extends JPanel {
         // Color BMI category column
         table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int r,
-                    int c) {
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int r, int c) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, val, sel, foc, r, c);
                 String v = val != null ? val.toString() : "";
                 lbl.setForeground(v.equals("Gầy") ? Theme.ACCENT_CYAN
                         : v.equals("Bình thường") ? Theme.ACCENT_GREEN
-                                : v.equals("Thừa cân") ? Theme.ACCENT_ORANGE : new Color(248, 113, 113));
+                        : v.equals("Thừa cân") ? Theme.ACCENT_ORANGE : new Color(248, 113, 113));
                 lbl.setBackground(sel ? new Color(99, 102, 241, 80) : Theme.BG_CARD);
                 return lbl;
             }

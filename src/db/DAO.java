@@ -44,6 +44,17 @@ public class DAO {
         return false;
     }
 
+    /** Cập nhật chiều cao mặc định trong bảng users */
+    public static boolean updateUserHeight(int userId, float heightCm) {
+        String sql = "UPDATE users SET height_cm=? WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setFloat(1, heightCm);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
     // ==================== WEIGHT ====================
 
     public static boolean addWeight(int userId, float weight, float bmi, String date, String note) {
@@ -54,6 +65,15 @@ public class DAO {
             ps.setFloat(3, bmi);
             ps.setString(4, date);
             ps.setString(5, note);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public static boolean deleteWeight(int id) {
+        String sql = "DELETE FROM weight_log WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { e.printStackTrace(); }
         return false;
@@ -108,6 +128,15 @@ public class DAO {
         return false;
     }
 
+    public static boolean deleteWater(int id) {
+        String sql = "DELETE FROM water_log WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
     public static int getTodayWater(int userId) {
         String sql = "SELECT COALESCE(SUM(amount_ml),0) AS total FROM water_log WHERE user_id=? AND DATE(log_time)=CURDATE()";
         try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
@@ -150,6 +179,15 @@ public class DAO {
         return false;
     }
 
+    public static boolean deleteSleep(int id) {
+        String sql = "DELETE FROM sleep_log WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
     public static List<SleepLog> getSleepHistory(int userId) {
         List<SleepLog> list = new ArrayList<>();
         String sql = "SELECT * FROM sleep_log WHERE user_id=? ORDER BY sleep_time DESC LIMIT 14";
@@ -185,4 +223,64 @@ public class DAO {
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
+
+    // ==================== HEIGHT ====================
+
+    public static boolean addHeight(int userId, float heightCm, String date, String note) {
+        String sql = "INSERT INTO height_log (user_id, height_cm, log_date, note) VALUES (?,?,?,?)";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setFloat(2, heightCm);
+            ps.setString(3, date);
+            ps.setString(4, note);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public static boolean deleteHeight(int id) {
+        String sql = "DELETE FROM height_log WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public static List<HeightLog> getHeightHistory(int userId) {
+        List<HeightLog> list = new ArrayList<>();
+        String sql = "SELECT * FROM height_log WHERE user_id=? ORDER BY log_date DESC";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                HeightLog h = new HeightLog();
+                h.setId(rs.getInt("id"));
+                h.setUserId(userId);
+                h.setHeightCm(rs.getFloat("height_cm"));
+                h.setLogDate(rs.getDate("log_date"));
+                h.setNote(rs.getString("note"));
+                list.add(h);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public static HeightLog getLatestHeight(int userId) {
+        String sql = "SELECT * FROM height_log WHERE user_id=? ORDER BY log_date DESC LIMIT 1";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                HeightLog h = new HeightLog();
+                h.setId(rs.getInt("id"));
+                h.setHeightCm(rs.getFloat("height_cm"));
+                h.setLogDate(rs.getDate("log_date"));
+                h.setNote(rs.getString("note"));
+                return h;
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
 }
+

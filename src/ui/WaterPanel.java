@@ -16,6 +16,7 @@ public class WaterPanel extends JPanel {
     private JLabel lblTotal, lblPercent;
     private WaterProgressBar progressBar;
     private JPanel logListPanel;
+    private List<WaterLog> currentLogs;
     private final int GOAL_ML = 2000;
 
     public WaterPanel(User user) {
@@ -27,7 +28,7 @@ public class WaterPanel extends JPanel {
     }
 
     private void initUI() {
-        JLabel title = new JLabel("Nuoc - Theo doi uong nuoc");
+        JLabel title = new JLabel("Nước - Theo dõi uống nước");
         title.setFont(Theme.FONT_TITLE);
         title.setForeground(Theme.ACCENT_CYAN);
         title.setBounds(24, 20, 500, 36);
@@ -61,14 +62,13 @@ public class WaterPanel extends JPanel {
         progressBar.setBounds(16, 120, 308, 36);
         progressCard.add(progressBar);
 
-        JLabel lblTip = new JLabel("Uong du nuoc giup co the khoe manh!");
+        JLabel lblTip = new JLabel("Uống đủ nước giúp cơ thể khỏe mạnh!");
         lblTip.setFont(Theme.FONT_SMALL);
         lblTip.setForeground(Theme.TEXT_SECONDARY);
         lblTip.setBounds(16, 168, 308, 18);
         progressCard.add(lblTip);
 
-        // Status emoji
-        JLabel lblStatus = new JLabel("Hay nho uong nuoc nhe!");
+        JLabel lblStatus = new JLabel("Hãy nhớ uống nước nhé!");
         lblStatus.setFont(Theme.FONT_SMALL);
         lblStatus.setForeground(Theme.ACCENT_CYAN);
         lblStatus.setBounds(16, 196, 308, 20);
@@ -77,7 +77,7 @@ public class WaterPanel extends JPanel {
         // === QUICK ADD BUTTONS ===
         JPanel quickCard = Theme.createCard();
         quickCard.setLayout(null);
-        quickCard.setBounds(24, 344, 340, 200);
+        quickCard.setBounds(24, 344, 340, 220);
         add(quickCard);
 
         JLabel lblQuick = new JLabel("Thêm nhanh");
@@ -87,44 +87,71 @@ public class WaterPanel extends JPanel {
         quickCard.add(lblQuick);
 
         int[] amounts = { 150, 200, 330, 500 };
-        String[] icons = { "Ca phe", "Ly nho", "Chai nho", "Chai lon" };
+        String[] icons = { "Cà phê", "Ly nhỏ", "Chai nhỏ", "Chai lớn" };
         int bx = 16;
         for (int i = 0; i < amounts.length; i++) {
             final int ml = amounts[i];
             JButton btn = makeQuickBtn(icons[i] + "\n" + ml + "ml", ml);
-            btn.setBounds(bx, 50, 57, 60);
+            btn.setBounds(bx, 50, 70, 60);
             quickCard.add(btn);
-            bx += 62;
+            bx += 75;
         }
 
-        JTextField txtCustom = makeField("Tùy chỉnh (ml)");
-        txtCustom.setBounds(16, 128, 200, 40);
+        // Custom amount
+        addLabel(quickCard, "Số ml tùy chỉnh (1 - 5000 ml)", 16, 122);
+        JTextField txtCustom = makeField("Nhập số ml...");
+        txtCustom.setBounds(16, 142, 200, 40);
         quickCard.add(txtCustom);
 
         JButton btnCustom = Theme.createButton("Thêm", Theme.ACCENT_CYAN);
-        btnCustom.setBounds(224, 128, 100, 40);
+        btnCustom.setBounds(224, 142, 100, 40);
         quickCard.add(btnCustom);
         btnCustom.addActionListener(e -> {
-            try {
-                int ml = Integer.parseInt(txtCustom.getText().trim());
-                addWater(ml);
-                txtCustom.setText("");
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Nhập số ml hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            String val = txtCustom.getText().trim();
+            if (val.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập số ml!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
             }
+            int ml;
+            try {
+                ml = Integer.parseInt(val);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Số ml phải là số nguyên (vd: 250)!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (ml < 1 || ml > 5000) {
+                JOptionPane.showMessageDialog(this, "Số ml phải từ 1 đến 5000!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            addWater(ml);
+            txtCustom.setText("");
         });
 
         // === LOG LIST ===
         JPanel listCard = Theme.createCard();
         listCard.setLayout(new BorderLayout());
-        listCard.setBounds(380, 68, 450, 476);
+        listCard.setBounds(380, 68, 460, 496);
         add(listCard);
 
-        JLabel lblLog = new JLabel("  Lich su hom nay");
+        JPanel listHeader = new JPanel(new BorderLayout());
+        listHeader.setBackground(Theme.BG_CARD);
+        listHeader.setPreferredSize(new Dimension(460, 44));
+
+        JLabel lblLog = new JLabel("  Lịch sử hôm nay (chọn để xóa)");
         lblLog.setFont(Theme.FONT_HEADING);
         lblLog.setForeground(Theme.TEXT_PRIMARY);
-        lblLog.setPreferredSize(new Dimension(450, 40));
-        listCard.add(lblLog, BorderLayout.NORTH);
+        listHeader.add(lblLog, BorderLayout.CENTER);
+
+        JButton btnDel = new JButton("Xóa");
+        btnDel.setFont(Theme.FONT_SMALL.deriveFont(Font.BOLD));
+        btnDel.setForeground(new Color(248, 113, 113));
+        btnDel.setBackground(Theme.BG_CARD2);
+        btnDel.setBorderPainted(false);
+        btnDel.setFocusPainted(false);
+        btnDel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnDel.setPreferredSize(new Dimension(60, 44));
+        listHeader.add(btnDel, BorderLayout.EAST);
+        listCard.add(listHeader, BorderLayout.NORTH);
 
         logListPanel = new JPanel();
         logListPanel.setLayout(new BoxLayout(logListPanel, BoxLayout.Y_AXIS));
@@ -135,7 +162,12 @@ public class WaterPanel extends JPanel {
         scroll.getViewport().setBackground(Theme.BG_CARD);
         scroll.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
         listCard.add(scroll, BorderLayout.CENTER);
+
+        btnDel.addActionListener(e -> deleteSelectedLog());
     }
+
+    // Biến lưu index đang được chọn
+    private int selectedLogIndex = -1;
 
     private JButton makeQuickBtn(String label, int ml) {
         JButton btn = new JButton("<html><center>" + label.replace("\n", "<br>") + "</center></html>") {
@@ -161,10 +193,33 @@ public class WaterPanel extends JPanel {
 
     private void addWater(int ml) {
         boolean ok = DAO.addWater(user.getId(), ml);
-        if (ok)
+        if (ok) loadData();
+        else JOptionPane.showMessageDialog(this, "Lỗi khi lưu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void deleteSelectedLog() {
+        if (currentLogs == null || currentLogs.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xóa!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        if (selectedLogIndex < 0 || selectedLogIndex >= currentLogs.size()) {
+            JOptionPane.showMessageDialog(this, "Hãy chọn một bản ghi trong danh sách để xóa!", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        WaterLog log = currentLogs.get(selectedLogIndex);
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Xóa bản ghi " + log.getAmountMl() + " ml lúc " + sdf.format(log.getLogTime()) + "?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        boolean ok = DAO.deleteWater(log.getId());
+        if (ok) {
+            selectedLogIndex = -1;
             loadData();
-        else
-            JOptionPane.showMessageDialog(this, "Lỗi khi lưu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Lỗi khi xóa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void loadData() {
@@ -177,14 +232,19 @@ public class WaterPanel extends JPanel {
 
         // Reload logs
         logListPanel.removeAll();
-        List<WaterLog> logs = DAO.getTodayWaterLogs(user.getId());
+        currentLogs = DAO.getTodayWaterLogs(user.getId());
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-        for (WaterLog log : logs) {
+
+        for (int i = 0; i < currentLogs.size(); i++) {
+            final int idx = i;
+            WaterLog log = currentLogs.get(i);
+
             JPanel row = new JPanel(null);
-            row.setMaximumSize(new Dimension(430, 44));
-            row.setMinimumSize(new Dimension(430, 44));
-            row.setPreferredSize(new Dimension(430, 44));
-            row.setBackground(Theme.BG_CARD);
+            row.setMaximumSize(new Dimension(440, 44));
+            row.setMinimumSize(new Dimension(440, 44));
+            row.setPreferredSize(new Dimension(440, 44));
+            row.setBackground(i == selectedLogIndex ? new Color(99, 102, 241, 40) : Theme.BG_CARD);
+            row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             JLabel timeLabel = new JLabel(sdf.format(log.getLogTime()));
             timeLabel.setFont(Theme.FONT_SMALL);
@@ -195,18 +255,32 @@ public class WaterPanel extends JPanel {
             JLabel mlLabel = new JLabel(log.getAmountMl() + " ml");
             mlLabel.setFont(Theme.FONT_BODY.deriveFont(Font.BOLD));
             mlLabel.setForeground(Theme.ACCENT_CYAN);
-            mlLabel.setBounds(80, 12, 140, 20);
+            mlLabel.setBounds(80, 12, 200, 20);
             row.add(mlLabel);
+
+            JLabel selLabel = new JLabel(idx == selectedLogIndex ? "  [đã chọn]" : "");
+            selLabel.setFont(Theme.FONT_SMALL);
+            selLabel.setForeground(Theme.ACCENT_ORANGE);
+            selLabel.setBounds(270, 12, 130, 20);
+            row.add(selLabel);
 
             JSeparator sep = new JSeparator();
             sep.setForeground(Theme.BORDER);
-            sep.setBounds(0, 43, 430, 1);
+            sep.setBounds(0, 43, 440, 1);
             row.add(sep);
+
+            row.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    selectedLogIndex = (selectedLogIndex == idx) ? -1 : idx;
+                    loadData();
+                }
+            });
 
             logListPanel.add(row);
         }
 
-        if (logs.isEmpty()) {
+        if (currentLogs.isEmpty()) {
             JLabel empty = new JLabel("  Chưa có ghi chép hôm nay", SwingConstants.CENTER);
             empty.setFont(Theme.FONT_BODY);
             empty.setForeground(Theme.TEXT_SECONDARY);
@@ -223,14 +297,9 @@ public class WaterPanel extends JPanel {
     class WaterProgressBar extends JPanel {
         private int percent = 0;
 
-        WaterProgressBar() {
-            setOpaque(false);
-        }
+        WaterProgressBar() { setOpaque(false); }
 
-        void setPercent(int p) {
-            this.percent = p;
-            repaint();
-        }
+        void setPercent(int p) { this.percent = p; repaint(); }
 
         @Override
         protected void paintComponent(Graphics g) {
@@ -264,7 +333,6 @@ public class WaterPanel extends JPanel {
                     tf.setForeground(Theme.TEXT_PRIMARY);
                 }
             }
-
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (tf.getText().isEmpty()) {
                     tf.setText(hint);
@@ -273,5 +341,13 @@ public class WaterPanel extends JPanel {
             }
         });
         return tf;
+    }
+
+    private void addLabel(JPanel p, String text, int x, int y) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(Theme.FONT_SMALL);
+        lbl.setForeground(Theme.TEXT_SECONDARY);
+        lbl.setBounds(x, y, 300, 20);
+        p.add(lbl);
     }
 }

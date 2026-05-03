@@ -15,7 +15,7 @@ public class DashboardForm extends JFrame {
     private JButton activeBtn;
 
     // Sidebar buttons
-    private JButton btnDashboard, btnWeight, btnWater, btnSleep, btnLogout;
+    private JButton btnDashboard, btnWeight, btnWater, btnSleep, btnHeight, btnLogout;
 
     public DashboardForm(User user) {
         this.currentUser = user;
@@ -24,7 +24,7 @@ public class DashboardForm extends JFrame {
 
     private void initUI() {
         setTitle("Health Tracker - " + currentUser.getFullName());
-        setSize(1100, 680);
+        setSize(1100, 720);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -44,16 +44,14 @@ public class DashboardForm extends JFrame {
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel(null);
         sidebar.setBackground(Theme.BG_CARD);
-        sidebar.setPreferredSize(new Dimension(220, 680));
+        sidebar.setPreferredSize(new Dimension(220, 720));
 
-        // App name
         JLabel lblApp = new JLabel("[♥]  Health Tracker");
         lblApp.setFont(Theme.FONT_HEADING);
         lblApp.setForeground(Theme.TEXT_PRIMARY);
         lblApp.setBounds(20, 28, 185, 30);
         sidebar.add(lblApp);
 
-        // User info
         JPanel userCard = new JPanel(null);
         userCard.setBackground(Theme.BG_CARD2);
         userCard.setBounds(12, 72, 196, 64);
@@ -73,31 +71,31 @@ public class DashboardForm extends JFrame {
         userCard.add(lblUname);
         sidebar.add(userCard);
 
-        // Nav separator
         JLabel sep = new JLabel("MENU");
         sep.setFont(new Font("Segoe UI", Font.BOLD, 10));
         sep.setForeground(Theme.TEXT_SECONDARY);
         sep.setBounds(20, 152, 100, 18);
         sidebar.add(sep);
 
-        // Nav buttons
-        btnDashboard = makeSidebarBtn("[H]  Tổng quan", 175);
-        btnWeight    = makeSidebarBtn("[=]  Cân nặng",  225);
-        btnWater     = makeSidebarBtn("[~]  Uống nước", 275);
-        btnSleep     = makeSidebarBtn("[z]  Giấc ngủ",  325);
+        btnDashboard = makeSidebarBtn("[H]  Tổng quan",  175);
+        btnWeight    = makeSidebarBtn("[=]  Cân nặng",   225);
+        btnWater     = makeSidebarBtn("[~]  Uống nước",  275);
+        btnSleep     = makeSidebarBtn("[z]  Giấc ngủ",   325);
+        btnHeight    = makeSidebarBtn("[↕]  Chiều cao",  375);
 
         sidebar.add(btnDashboard);
         sidebar.add(btnWeight);
         sidebar.add(btnWater);
         sidebar.add(btnSleep);
+        sidebar.add(btnHeight);
 
         btnDashboard.addActionListener(e -> { setActive(btnDashboard); showDashboard(); });
         btnWeight.addActionListener(e    -> { setActive(btnWeight);    showWeight(); });
         btnWater.addActionListener(e     -> { setActive(btnWater);     showWater(); });
         btnSleep.addActionListener(e     -> { setActive(btnSleep);     showSleep(); });
+        btnHeight.addActionListener(e    -> { setActive(btnHeight);    showHeight(); });
 
-        // Logout
-        btnLogout = makeSidebarBtn("  Đăng xuất", 590);
+        btnLogout = makeSidebarBtn("  Đăng xuất", 640);
         btnLogout.setForeground(new Color(248, 113, 113));
         sidebar.add(btnLogout);
         btnLogout.addActionListener(e -> {
@@ -151,7 +149,6 @@ public class DashboardForm extends JFrame {
         JPanel panel = new JPanel(null);
         panel.setBackground(Theme.BG_DARK);
 
-        // Header
         JLabel title = new JLabel("Xin chào, " + currentUser.getFullName() + "! ");
         title.setFont(Theme.FONT_TITLE);
         title.setForeground(Theme.TEXT_PRIMARY);
@@ -166,42 +163,52 @@ public class DashboardForm extends JFrame {
         panel.add(dateLabel);
 
         // Stats cards
-        WeightLog latest = DAO.getLatestWeight(currentUser.getId());
-        int waterToday   = DAO.getTodayWater(currentUser.getId());
+        WeightLog latest     = DAO.getLatestWeight(currentUser.getId());
+        int waterToday       = DAO.getTodayWater(currentUser.getId());
         SleepLog latestSleep = DAO.getLatestSleep(currentUser.getId());
+        HeightLog latestH    = DAO.getLatestHeight(currentUser.getId());
 
         String weightVal = latest != null ? latest.getWeightKg() + " kg" : "Chưa có";
         String bmiVal    = latest != null ? String.format("%.1f", latest.getBmi()) + " (" + latest.getBmiCategory() + ")" : "—";
-        String waterVal  = waterToday + " ml / 2500 ml";
+        String waterVal  = waterToday + " ml / " + 2000 + " ml";
         String sleepVal  = latestSleep != null ? String.format("%.1fh", latestSleep.getDurationHours()) : "Chưa có";
         String sleepQ    = latestSleep != null ? latestSleep.getQuality() : "—";
+        String heightVal = latestH != null ? String.format("%.1f cm", latestH.getHeightCm()) : (currentUser.getHeightCm() > 0 ? String.format("%.1f cm", currentUser.getHeightCm()) : "Chưa có");
+        String heightCat = latestH != null ? latestH.getHeightCategory() : "—";
 
-        panel.add(makeDashCard("[=]", "Cân nặng",   weightVal, bmiVal,   Theme.ACCENT_BLUE,   30,  110, 390, 140));
-        panel.add(makeDashCard("[~]", "Nước hôm nay", waterVal, waterToday >= 2500 ? "[v] Đủ rồi!" : "⚠️ Cần uống thêm", Theme.ACCENT_CYAN, 440, 110, 390, 140));
-        panel.add(makeDashCard("[z]", "Giấc ngủ gần nhất", sleepVal, "Chất lượng: " + sleepQ, Theme.ACCENT_PINK, 30, 270, 390, 140));
-        panel.add(makeDashCard("[#]", "BMI hiện tại", bmiVal, latest != null ? "Ngày: " + new SimpleDateFormat("dd/MM/yyyy").format(latest.getLogDate()) : "—", Theme.ACCENT_ORANGE, 440, 270, 390, 140));
+        // Row 1: Cân nặng + Nước
+        panel.add(makeDashCard("[=]", "Cân nặng",       weightVal, bmiVal,   Theme.ACCENT_BLUE,   30,  100, 375, 140));
+        panel.add(makeDashCard("[~]", "Nước hôm nay",   waterVal,  waterToday >= 2000 ? "[v] Đủ rồi!" : "Cần uống thêm", Theme.ACCENT_CYAN, 420, 100, 375, 140));
+        // Row 2: Giấc ngủ + Chiều cao
+        panel.add(makeDashCard("[z]", "Giấc ngủ gần nhất", sleepVal, "Chất lượng: " + sleepQ, Theme.ACCENT_PINK,   30,  260, 375, 140));
+        panel.add(makeDashCard("[↕]", "Chiều cao",      heightVal, "Phân loại: " + heightCat, Theme.ACCENT_GREEN, 420, 260, 375, 140));
 
         // Quick actions
         JLabel lblQuick = new JLabel("Thao tác nhanh");
         lblQuick.setFont(Theme.FONT_HEADING);
         lblQuick.setForeground(Theme.TEXT_PRIMARY);
-        lblQuick.setBounds(30, 440, 300, 28);
+        lblQuick.setBounds(30, 430, 300, 28);
         panel.add(lblQuick);
 
         JButton qWeight = Theme.createButton("+ Ghi cân nặng", Theme.ACCENT_BLUE);
-        qWeight.setBounds(30, 478, 180, 44);
+        qWeight.setBounds(30, 468, 160, 44);
         panel.add(qWeight);
         qWeight.addActionListener(e -> { setActive(btnWeight); showWeight(); });
 
         JButton qWater = Theme.createButton("+ Uống nước", Theme.ACCENT_CYAN);
-        qWater.setBounds(225, 478, 160, 44);
+        qWater.setBounds(205, 468, 145, 44);
         panel.add(qWater);
         qWater.addActionListener(e -> { setActive(btnWater); showWater(); });
 
         JButton qSleep = Theme.createButton("+ Ghi ngủ", Theme.ACCENT_PINK);
-        qSleep.setBounds(400, 478, 150, 44);
+        qSleep.setBounds(365, 468, 130, 44);
         panel.add(qSleep);
         qSleep.addActionListener(e -> { setActive(btnSleep); showSleep(); });
+
+        JButton qHeight = Theme.createButton("+ Chiều cao", Theme.ACCENT_GREEN);
+        qHeight.setBounds(510, 468, 130, 44);
+        panel.add(qHeight);
+        qHeight.addActionListener(e -> { setActive(btnHeight); showHeight(); });
 
         contentPanel.add(panel, BorderLayout.CENTER);
         contentPanel.revalidate();
@@ -215,7 +222,6 @@ public class DashboardForm extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Theme.BG_CARD);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
-                // Accent bar top
                 g2.setColor(accent);
                 g2.fillRoundRect(0, 0, getWidth(), 4, 4, 4);
                 g2.dispose();
@@ -231,7 +237,7 @@ public class DashboardForm extends JFrame {
         JLabel lblTitle = new JLabel(title);
         lblTitle.setFont(Theme.FONT_SMALL);
         lblTitle.setForeground(Theme.TEXT_SECONDARY);
-        lblTitle.setBounds(60, 16, 310, 18);
+        lblTitle.setBounds(60, 16, 300, 18);
         card.add(lblTitle);
 
         JLabel lblValue = new JLabel(value);
@@ -272,6 +278,15 @@ public class DashboardForm extends JFrame {
         setActive(btnSleep);
         contentPanel.removeAll();
         contentPanel.add(new SleepPanel(currentUser), BorderLayout.CENTER);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    // ===================== HEIGHT =====================
+    private void showHeight() {
+        setActive(btnHeight);
+        contentPanel.removeAll();
+        contentPanel.add(new HeightPanel(currentUser), BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }

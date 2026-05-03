@@ -1,4 +1,4 @@
-﻿import ui.LoginForm;
+import ui.LoginForm;
 import util.Theme;
 import javax.swing.SwingUtilities;
 
