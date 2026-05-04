@@ -31,7 +31,7 @@ public class HeightPanel extends JPanel {
 
     private void initUI() {
         // Title
-        JLabel title = new JLabel("[↕]  Theo dõi chiều cao");
+        JLabel title = new JLabel("[|]  Theo dõi chiều cao");
         title.setFont(Theme.FONT_TITLE);
         title.setForeground(Theme.ACCENT_GREEN);
         title.setBounds(24, 20, 400, 36);
@@ -71,9 +71,17 @@ public class HeightPanel extends JPanel {
         inputCard.add(lblCategory);
 
         txtHeight.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { updateCategory(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { updateCategory(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { updateCategory(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                updateCategory();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                updateCategory();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                updateCategory();
+            }
         });
 
         // Date
@@ -101,7 +109,8 @@ public class HeightPanel extends JPanel {
         infoTitle.setBounds(8, 8, 270, 18);
         infoBox.add(infoTitle);
 
-        String[] cats = { "< 150: Thấp  |  150-160: Trung bình thấp", "160-175: Trung bình  |  175-185: Cao  |  >185: Rất cao" };
+        String[] cats = { "< 150: Thấp  |  150-160: Trung bình thấp",
+                "160-175: Trung bình  |  175-185: Cao  |  >185: Rất cao" };
         for (int i = 0; i < cats.length; i++) {
             JLabel c = new JLabel(cats[i]);
             c.setFont(new Font("Segoe UI", Font.PLAIN, 10));
@@ -125,12 +134,12 @@ public class HeightPanel extends JPanel {
         tableHeader.setBackground(Theme.BG_CARD);
         tableHeader.setPreferredSize(new Dimension(510, 44));
 
-        JLabel lblHist = new JLabel("  [↕]  Lịch sử chiều cao (chọn dòng để xóa)");
+        JLabel lblHist = new JLabel("  [|]  Lịch sử chiều cao (chọn dòng để xóa)");
         lblHist.setFont(Theme.FONT_HEADING);
         lblHist.setForeground(Theme.TEXT_PRIMARY);
         tableHeader.add(lblHist, BorderLayout.CENTER);
 
-        JButton btnDel = new JButton("🗑 Xóa");
+        JButton btnDel = new JButton(" Xóa");
         btnDel.setFont(Theme.FONT_SMALL.deriveFont(Font.BOLD));
         btnDel.setForeground(new Color(248, 113, 113));
         btnDel.setBackground(Theme.BG_CARD2);
@@ -143,7 +152,9 @@ public class HeightPanel extends JPanel {
 
         String[] cols = { "Ngày", "Chiều cao (cm)", "Phân loại", "Ghi chú" };
         tableModel = new DefaultTableModel(cols, 0) {
-            public boolean isCellEditable(int r, int c) { return false; }
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         table = new JTable(tableModel);
         styleTable();
@@ -166,10 +177,10 @@ public class HeightPanel extends JPanel {
             lblCategory.setText("Phân loại: " + cat);
             lblCategory.setForeground(
                     h < 150 ? new Color(248, 113, 113)
-                    : h < 160 ? Theme.ACCENT_ORANGE
-                    : h < 175 ? Theme.ACCENT_GREEN
-                    : h < 185 ? Theme.ACCENT_CYAN
-                    : Theme.ACCENT_BLUE);
+                            : h < 160 ? Theme.ACCENT_ORANGE
+                                    : h < 175 ? Theme.ACCENT_GREEN
+                                            : h < 185 ? Theme.ACCENT_CYAN
+                                                    : Theme.ACCENT_BLUE);
         } catch (NumberFormatException ex) {
             lblCategory.setText("Phân loại: —");
             lblCategory.setForeground(Theme.TEXT_SECONDARY);
@@ -183,21 +194,25 @@ public class HeightPanel extends JPanel {
 
         // Validate chiều cao
         if (heightStr.isEmpty()) {
-            showError("Vui lòng nhập chiều cao!"); return;
+            showError("Vui lòng nhập chiều cao!");
+            return;
         }
         float height;
         try {
             height = Float.parseFloat(heightStr);
         } catch (NumberFormatException ex) {
-            showError("Chiều cao phải là số (vd: 170.5)!"); return;
+            showError("Chiều cao phải là số (vd: 170.5)!");
+            return;
         }
         if (height < 50 || height > 250) {
-            showError("Chiều cao phải từ 50 đến 250 cm!"); return;
+            showError("Chiều cao phải từ 50 đến 250 cm!");
+            return;
         }
 
         // Validate ngày
         if (!isValidDate(dateStr)) {
-            showError("Ngày không hợp lệ! Định dạng: yyyy-MM-dd (vd: 2025-05-01)"); return;
+            showError("Ngày không hợp lệ! Định dạng: yyyy-MM-dd (vd: 2025-05-01)");
+            return;
         }
 
         boolean ok = DAO.addHeight(user.getId(), height, dateStr, note);
@@ -206,7 +221,8 @@ public class HeightPanel extends JPanel {
             DAO.updateUserHeight(user.getId(), height);
             user.setHeightCm(height);
             lblCurrentHeight.setText("Chiều cao hiện tại: " + String.format("%.1f cm", height));
-            JOptionPane.showMessageDialog(this, "[v] Đã lưu chiều cao!\nChiều cao mới sẽ được dùng để tính BMI.", "Thành công",
+            JOptionPane.showMessageDialog(this, "[v] Đã lưu chiều cao!\nChiều cao mới sẽ được dùng để tính BMI.",
+                    "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
             loadData();
         } else {
@@ -217,13 +233,15 @@ public class HeightPanel extends JPanel {
     private void deleteSelected() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Hãy chọn một dòng trong bảng để xóa!", "Chưa chọn dòng", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Hãy chọn một dòng trong bảng để xóa!", "Chưa chọn dòng",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc muốn xóa bản ghi chiều cao ngày " + tableModel.getValueAt(row, 0) + "?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (confirm != JOptionPane.YES_OPTION) return;
+        if (confirm != JOptionPane.YES_OPTION)
+            return;
 
         HeightLog selected = currentList.get(row);
         boolean ok = DAO.deleteHeight(selected.getId());
@@ -240,7 +258,7 @@ public class HeightPanel extends JPanel {
         currentList = DAO.getHeightHistory(user.getId());
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         for (HeightLog h : currentList) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     sdf.format(h.getLogDate()),
                     String.format("%.1f cm", h.getHeightCm()),
                     h.getHeightCategory(),
@@ -250,11 +268,16 @@ public class HeightPanel extends JPanel {
     }
 
     private boolean isValidDate(String s) {
-        if (s == null || s.trim().isEmpty()) return false;
+        if (s == null || s.trim().isEmpty())
+            return false;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         sdf.setLenient(false);
-        try { sdf.parse(s.trim()); return true; }
-        catch (ParseException e) { return false; }
+        try {
+            sdf.parse(s.trim());
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
     }
 
     private void showError(String msg) {
@@ -277,15 +300,16 @@ public class HeightPanel extends JPanel {
         // Color height category column
         table.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int r, int c) {
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int r,
+                    int c) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, val, sel, foc, r, c);
                 String v = val != null ? val.toString() : "";
                 lbl.setForeground(
                         v.equals("Thấp") ? new Color(248, 113, 113)
-                        : v.equals("Trung bình thấp") ? Theme.ACCENT_ORANGE
-                        : v.equals("Trung bình") ? Theme.ACCENT_GREEN
-                        : v.equals("Cao") ? Theme.ACCENT_CYAN
-                        : Theme.ACCENT_BLUE);
+                                : v.equals("Trung bình thấp") ? Theme.ACCENT_ORANGE
+                                        : v.equals("Trung bình") ? Theme.ACCENT_GREEN
+                                                : v.equals("Cao") ? Theme.ACCENT_CYAN
+                                                        : Theme.ACCENT_BLUE);
                 lbl.setBackground(sel ? new Color(52, 211, 153, 80) : Theme.BG_CARD);
                 return lbl;
             }

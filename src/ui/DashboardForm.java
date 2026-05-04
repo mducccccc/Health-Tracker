@@ -24,7 +24,7 @@ public class DashboardForm extends JFrame {
 
     private void initUI() {
         setTitle("Health Tracker - " + currentUser.getFullName());
-        setSize(1100, 720);
+        setSize(1100, 750);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -77,12 +77,12 @@ public class DashboardForm extends JFrame {
         sep.setBounds(20, 152, 100, 18);
         sidebar.add(sep);
 
-        btnDashboard = makeSidebarBtn("[H]  Tổng quan",  175);
-        btnWeight    = makeSidebarBtn("[=]  Cân nặng",   225);
-        btnWater     = makeSidebarBtn("[~]  Uống nước",  275);
-        btnSleep     = makeSidebarBtn("[z]  Giấc ngủ",   325);
-        btnHeight    = makeSidebarBtn("[↕]  Chiều cao",  375);
-        btnScore     = makeSidebarBtn("[★]  Health Score", 425);
+        btnDashboard = makeSidebarBtn("[H]  Tổng quan", 175);
+        btnWeight = makeSidebarBtn("[=]  Cân nặng", 225);
+        btnWater = makeSidebarBtn("[~]  Uống nước", 275);
+        btnSleep = makeSidebarBtn("[z]  Giấc ngủ", 325);
+        btnHeight = makeSidebarBtn("[|]  Chiều cao", 375);
+        btnScore = makeSidebarBtn("[♥]  Health Score", 425);
         btnScore.setForeground(new Color(251, 191, 36)); // màu vàng nổi bật
 
         sidebar.add(btnDashboard);
@@ -92,14 +92,38 @@ public class DashboardForm extends JFrame {
         sidebar.add(btnHeight);
         sidebar.add(btnScore);
 
-        btnDashboard.addActionListener(e -> { setActive(btnDashboard); showDashboard(); });
-        btnWeight.addActionListener(e    -> { setActive(btnWeight);    showWeight(); });
-        btnWater.addActionListener(e     -> { setActive(btnWater);     showWater(); });
-        btnSleep.addActionListener(e     -> { setActive(btnSleep);     showSleep(); });
-        btnHeight.addActionListener(e    -> { setActive(btnHeight);    showHeight(); });
-        btnScore.addActionListener(e     -> { setActive(btnScore);     showHealthScore(); });
+        btnDashboard.addActionListener(e -> {
+            setActive(btnDashboard);
+            showDashboard();
+        });
+        btnWeight.addActionListener(e -> {
+            setActive(btnWeight);
+            showWeight();
+        });
+        btnWater.addActionListener(e -> {
+            setActive(btnWater);
+            showWater();
+        });
+        btnSleep.addActionListener(e -> {
+            setActive(btnSleep);
+            showSleep();
+        });
+        btnHeight.addActionListener(e -> {
+            setActive(btnHeight);
+            showHeight();
+        });
+        btnScore.addActionListener(e -> {
+            setActive(btnScore);
+            showHealthScore();
+        });
 
-        btnLogout = makeSidebarBtn("  Đăng xuất", 688);
+        // Đường kẻ phân cách
+        JSeparator sep2 = new JSeparator();
+        sep2.setBounds(12, 480, 196, 1);
+        sep2.setForeground(new Color(51, 65, 85));
+        sidebar.add(sep2);
+
+        btnLogout = makeSidebarBtn("  Đăng xuất", 490);
         btnLogout.setForeground(new Color(248, 113, 113));
         sidebar.add(btnLogout);
         btnLogout.addActionListener(e -> {
@@ -112,7 +136,8 @@ public class DashboardForm extends JFrame {
 
     private JButton makeSidebarBtn(String text, int y) {
         JButton btn = new JButton(text) {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (this == activeBtn) {
@@ -121,13 +146,13 @@ public class DashboardForm extends JFrame {
                     g2.setColor(Theme.ACCENT_BLUE);
                     g2.fillRoundRect(0, 6, 4, 28, 4, 4);
                 } else if (getModel().isRollover()) {
-                    g2.setColor(new Color(255,255,255,15));
+                    g2.setColor(new Color(255, 255, 255, 15));
                     g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 }
                 g2.setFont(Theme.FONT_BODY);
-                g2.setColor(this == activeBtn ? Theme.TEXT_PRIMARY :
-                            getForeground() != null ? getForeground() : Theme.TEXT_SECONDARY);
-                g2.drawString(getText(), 20, getHeight()/2 + 5);
+                g2.setColor(this == activeBtn ? Theme.TEXT_PRIMARY
+                        : getForeground() != null ? getForeground() : Theme.TEXT_SECONDARY);
+                g2.drawString(getText(), 20, getHeight() / 2 + 5);
                 g2.dispose();
             }
         };
@@ -167,25 +192,30 @@ public class DashboardForm extends JFrame {
         panel.add(dateLabel);
 
         // Stats cards
-        WeightLog latest     = DAO.getLatestWeight(currentUser.getId());
-        int waterToday       = DAO.getTodayWater(currentUser.getId());
+        WeightLog latest = DAO.getLatestWeight(currentUser.getId());
+        int waterToday = DAO.getTodayWater(currentUser.getId());
         SleepLog latestSleep = DAO.getLatestSleep(currentUser.getId());
-        HeightLog latestH    = DAO.getLatestHeight(currentUser.getId());
+        HeightLog latestH = DAO.getLatestHeight(currentUser.getId());
 
         String weightVal = latest != null ? latest.getWeightKg() + " kg" : "Chưa có";
-        String bmiVal    = latest != null ? String.format("%.1f", latest.getBmi()) + " (" + latest.getBmiCategory() + ")" : "—";
-        String waterVal  = waterToday + " ml / " + 2000 + " ml";
-        String sleepVal  = latestSleep != null ? String.format("%.1fh", latestSleep.getDurationHours()) : "Chưa có";
-        String sleepQ    = latestSleep != null ? latestSleep.getQuality() : "—";
-        String heightVal = latestH != null ? String.format("%.1f cm", latestH.getHeightCm()) : (currentUser.getHeightCm() > 0 ? String.format("%.1f cm", currentUser.getHeightCm()) : "Chưa có");
+        String bmiVal = latest != null ? String.format("%.1f", latest.getBmi()) + " (" + latest.getBmiCategory() + ")"
+                : "—";
+        String waterVal = waterToday + " ml / " + 2000 + " ml";
+        String sleepVal = latestSleep != null ? String.format("%.1fh", latestSleep.getDurationHours()) : "Chưa có";
+        String sleepQ = latestSleep != null ? latestSleep.getQuality() : "—";
+        String heightVal = latestH != null ? String.format("%.1f cm", latestH.getHeightCm())
+                : (currentUser.getHeightCm() > 0 ? String.format("%.1f cm", currentUser.getHeightCm()) : "Chưa có");
         String heightCat = latestH != null ? latestH.getHeightCategory() : "—";
 
         // Row 1: Cân nặng + Nước
-        panel.add(makeDashCard("[=]", "Cân nặng",       weightVal, bmiVal,   Theme.ACCENT_BLUE,   30,  100, 375, 140));
-        panel.add(makeDashCard("[~]", "Nước hôm nay",   waterVal,  waterToday >= 2000 ? "[v] Đủ rồi!" : "Cần uống thêm", Theme.ACCENT_CYAN, 420, 100, 375, 140));
+        panel.add(makeDashCard("[=]", "Cân nặng", weightVal, bmiVal, Theme.ACCENT_BLUE, 30, 100, 375, 140));
+        panel.add(makeDashCard("[~]", "Nước hôm nay", waterVal, waterToday >= 2000 ? "[v] Đủ rồi!" : "Cần uống thêm",
+                Theme.ACCENT_CYAN, 420, 100, 375, 140));
         // Row 2: Giấc ngủ + Chiều cao
-        panel.add(makeDashCard("[z]", "Giấc ngủ gần nhất", sleepVal, "Chất lượng: " + sleepQ, Theme.ACCENT_PINK,   30,  260, 375, 140));
-        panel.add(makeDashCard("[↕]", "Chiều cao",      heightVal, "Phân loại: " + heightCat, Theme.ACCENT_GREEN, 420, 260, 375, 140));
+        panel.add(makeDashCard("[z]", "Giấc ngủ gần nhất", sleepVal, "Chất lượng: " + sleepQ, Theme.ACCENT_PINK, 30,
+                260, 375, 140));
+        panel.add(makeDashCard("[|]", "Chiều cao", heightVal, "Phân loại: " + heightCat, Theme.ACCENT_GREEN, 420, 260,
+                375, 140));
 
         // Quick actions
         JLabel lblQuick = new JLabel("Thao tác nhanh");
@@ -197,31 +227,45 @@ public class DashboardForm extends JFrame {
         JButton qWeight = Theme.createButton("+ Ghi cân nặng", Theme.ACCENT_BLUE);
         qWeight.setBounds(30, 468, 160, 44);
         panel.add(qWeight);
-        qWeight.addActionListener(e -> { setActive(btnWeight); showWeight(); });
+        qWeight.addActionListener(e -> {
+            setActive(btnWeight);
+            showWeight();
+        });
 
         JButton qWater = Theme.createButton("+ Uống nước", Theme.ACCENT_CYAN);
         qWater.setBounds(205, 468, 145, 44);
         panel.add(qWater);
-        qWater.addActionListener(e -> { setActive(btnWater); showWater(); });
+        qWater.addActionListener(e -> {
+            setActive(btnWater);
+            showWater();
+        });
 
         JButton qSleep = Theme.createButton("+ Ghi ngủ", Theme.ACCENT_PINK);
         qSleep.setBounds(365, 468, 130, 44);
         panel.add(qSleep);
-        qSleep.addActionListener(e -> { setActive(btnSleep); showSleep(); });
+        qSleep.addActionListener(e -> {
+            setActive(btnSleep);
+            showSleep();
+        });
 
         JButton qHeight = Theme.createButton("+ Chiều cao", Theme.ACCENT_GREEN);
         qHeight.setBounds(510, 468, 130, 44);
         panel.add(qHeight);
-        qHeight.addActionListener(e -> { setActive(btnHeight); showHeight(); });
+        qHeight.addActionListener(e -> {
+            setActive(btnHeight);
+            showHeight();
+        });
 
         contentPanel.add(panel, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
 
-    private JPanel makeDashCard(String icon, String title, String value, String sub, Color accent, int x, int y, int w, int h) {
+    private JPanel makeDashCard(String icon, String title, String value, String sub, Color accent, int x, int y, int w,
+            int h) {
         JPanel card = new JPanel(null) {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Theme.BG_CARD);

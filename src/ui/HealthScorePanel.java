@@ -48,16 +48,16 @@ public class HealthScorePanel extends JPanel {
             bmiDetail = String.format("BMI hiện tại: %.1f (%s)", bmi, w.getBmiCategory());
             if (bmi >= 18.5 && bmi < 25.0) {
                 bmiScore = 40;
-                bmiStatus = "Rất tốt – Cân nặng lý tưởng!";
+                bmiStatus = "Rất tốt  Cân nặng lý tưởng!";
             } else if ((bmi >= 17.0 && bmi < 18.5) || (bmi >= 25.0 && bmi < 27.5)) {
                 bmiScore = 28;
-                bmiStatus = "Khá – Gần mức lý tưởng";
+                bmiStatus = "Khá  Gần mức lý tưởng";
             } else if ((bmi >= 15.0 && bmi < 17.0) || (bmi >= 27.5 && bmi < 30.0)) {
                 bmiScore = 15;
-                bmiStatus = "Trung bình – Cần cải thiện";
+                bmiStatus = "Trung bình  Cần cải thiện";
             } else {
                 bmiScore = 5;
-                bmiStatus = "Yếu – Cần điều chỉnh chế độ ăn";
+                bmiStatus = "Yếu  Cần điều chỉnh chế độ ăn";
             }
         } else {
             bmiScore = 0;

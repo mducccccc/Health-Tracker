@@ -50,13 +50,20 @@ public class SleepPanel extends JPanel {
         lblIn.setBounds(16, 16, 280, 24);
         inputCard.add(lblIn);
 
+        // Mặc định giờ ngủ = hôm qua 22:00, giờ thức = hôm nay 06:00
+        SimpleDateFormat dtFmt = new SimpleDateFormat("yyyy-MM-dd");
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        String today = dtFmt.format(cal.getTime());
+        cal.add(java.util.Calendar.DAY_OF_MONTH, -1);
+        String yesterday = dtFmt.format(cal.getTime());
+
         addLabel(inputCard, "Giờ đi ngủ (yyyy-MM-dd HH:mm)", 16, 50);
-        txtSleepTime = makeField("2025-04-29 23:00");
+        txtSleepTime = makeField(yesterday + " 22:00");
         txtSleepTime.setBounds(16, 72, 308, 40);
         inputCard.add(txtSleepTime);
 
         addLabel(inputCard, "Giờ thức dậy (yyyy-MM-dd HH:mm)", 16, 122);
-        txtWakeTime = makeField("2025-04-30 06:30");
+        txtWakeTime = makeField(today + " 06:00");
         txtWakeTime.setBounds(16, 144, 308, 40);
         inputCard.add(txtWakeTime);
 
