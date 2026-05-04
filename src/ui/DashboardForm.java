@@ -15,7 +15,7 @@ public class DashboardForm extends JFrame {
     private JButton activeBtn;
 
     // Sidebar buttons
-    private JButton btnDashboard, btnWeight, btnWater, btnSleep, btnHeight, btnLogout;
+    private JButton btnDashboard, btnWeight, btnWater, btnSleep, btnHeight, btnScore, btnLogout;
 
     public DashboardForm(User user) {
         this.currentUser = user;
@@ -44,7 +44,7 @@ public class DashboardForm extends JFrame {
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel(null);
         sidebar.setBackground(Theme.BG_CARD);
-        sidebar.setPreferredSize(new Dimension(220, 720));
+        sidebar.setPreferredSize(new Dimension(220, 760));
 
         JLabel lblApp = new JLabel("[♥]  Health Tracker");
         lblApp.setFont(Theme.FONT_HEADING);
@@ -82,20 +82,24 @@ public class DashboardForm extends JFrame {
         btnWater     = makeSidebarBtn("[~]  Uống nước",  275);
         btnSleep     = makeSidebarBtn("[z]  Giấc ngủ",   325);
         btnHeight    = makeSidebarBtn("[↕]  Chiều cao",  375);
+        btnScore     = makeSidebarBtn("[★]  Health Score", 425);
+        btnScore.setForeground(new Color(251, 191, 36)); // màu vàng nổi bật
 
         sidebar.add(btnDashboard);
         sidebar.add(btnWeight);
         sidebar.add(btnWater);
         sidebar.add(btnSleep);
         sidebar.add(btnHeight);
+        sidebar.add(btnScore);
 
         btnDashboard.addActionListener(e -> { setActive(btnDashboard); showDashboard(); });
         btnWeight.addActionListener(e    -> { setActive(btnWeight);    showWeight(); });
         btnWater.addActionListener(e     -> { setActive(btnWater);     showWater(); });
         btnSleep.addActionListener(e     -> { setActive(btnSleep);     showSleep(); });
         btnHeight.addActionListener(e    -> { setActive(btnHeight);    showHeight(); });
+        btnScore.addActionListener(e     -> { setActive(btnScore);     showHealthScore(); });
 
-        btnLogout = makeSidebarBtn("  Đăng xuất", 640);
+        btnLogout = makeSidebarBtn("  Đăng xuất", 688);
         btnLogout.setForeground(new Color(248, 113, 113));
         sidebar.add(btnLogout);
         btnLogout.addActionListener(e -> {
@@ -287,6 +291,20 @@ public class DashboardForm extends JFrame {
         setActive(btnHeight);
         contentPanel.removeAll();
         contentPanel.add(new HeightPanel(currentUser), BorderLayout.CENTER);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    // ===================== HEALTH SCORE =====================
+    private void showHealthScore() {
+        setActive(btnScore);
+        contentPanel.removeAll();
+        JScrollPane scroll = new JScrollPane(new HealthScorePanel(currentUser));
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.setBackground(Theme.BG_DARK);
+        scroll.getViewport().setBackground(Theme.BG_DARK);
+        contentPanel.add(scroll, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
