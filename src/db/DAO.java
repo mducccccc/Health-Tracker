@@ -282,5 +282,68 @@ public class DAO {
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
-}
 
+    // ==================== GOALS ====================
+
+    public static boolean addGoal(int userId, String goalType, float targetValue, String deadline) {
+        String sql = "INSERT INTO goals (user_id, goal_type, target_value, deadline, status) VALUES (?,?,?,?,'Đang thực hiện')";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, goalType);
+            ps.setFloat(3, targetValue);
+            ps.setString(4, deadline);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public static boolean deleteGoal(int id) {
+        String sql = "DELETE FROM goals WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public static boolean updateGoalStatus(int id, String status) {
+        String sql = "UPDATE goals SET status=? WHERE id=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public static List<model.Goal> getGoals(int userId) {
+        List<model.Goal> list = new ArrayList<>();
+        String sql = "SELECT * FROM goals WHERE user_id=? ORDER BY FIELD(status,'Đang thực hiện','Đạt được','Thất bại'), deadline ASC";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                model.Goal g = new model.Goal();
+                g.setId(rs.getInt("id"));
+                g.setUserId(userId);
+                g.setGoalType(rs.getString("goal_type"));
+                g.setTargetValue(rs.getFloat("target_value"));
+                g.setDeadline(rs.getDate("deadline"));
+                g.setStatus(rs.getString("status"));
+                list.add(g);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public static int countGoalsByStatus(int userId, String status) {
+        String sql = "SELECT COUNT(*) AS cnt FROM goals WHERE user_id=? AND status=?";
+        try (PreparedStatement ps = DatabaseConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, status);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("cnt");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+}

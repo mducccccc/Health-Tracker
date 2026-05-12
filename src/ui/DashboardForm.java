@@ -15,7 +15,7 @@ public class DashboardForm extends JFrame {
     private JButton activeBtn;
 
     // Sidebar buttons
-    private JButton btnDashboard, btnWeight, btnWater, btnSleep, btnHeight, btnScore, btnLogout;
+    private JButton btnDashboard, btnWeight, btnWater, btnSleep, btnHeight, btnScore, btnGoals, btnLogout;
 
     public DashboardForm(User user) {
         this.currentUser = user;
@@ -85,12 +85,16 @@ public class DashboardForm extends JFrame {
         btnScore = makeSidebarBtn("[♥]  Health Score", 425);
         btnScore.setForeground(new Color(251, 191, 36)); // màu vàng nổi bật
 
+        btnGoals = makeSidebarBtn("[◎]  Mục tiêu", 475);
+        btnGoals.setForeground(Theme.ACCENT_GREEN);
+
         sidebar.add(btnDashboard);
         sidebar.add(btnWeight);
         sidebar.add(btnWater);
         sidebar.add(btnSleep);
         sidebar.add(btnHeight);
         sidebar.add(btnScore);
+        sidebar.add(btnGoals);
 
         btnDashboard.addActionListener(e -> {
             setActive(btnDashboard);
@@ -116,14 +120,18 @@ public class DashboardForm extends JFrame {
             setActive(btnScore);
             showHealthScore();
         });
+        btnGoals.addActionListener(e -> {
+            setActive(btnGoals);
+            showGoals();
+        });
 
         // Đường kẻ phân cách
         JSeparator sep2 = new JSeparator();
-        sep2.setBounds(12, 480, 196, 1);
+        sep2.setBounds(12, 530, 196, 1);
         sep2.setForeground(new Color(51, 65, 85));
         sidebar.add(sep2);
 
-        btnLogout = makeSidebarBtn("  Đăng xuất", 490);
+        btnLogout = makeSidebarBtn("  Đăng xuất", 540);
         btnLogout.setForeground(new Color(248, 113, 113));
         sidebar.add(btnLogout);
         btnLogout.addActionListener(e -> {
@@ -349,6 +357,15 @@ public class DashboardForm extends JFrame {
         scroll.setBackground(Theme.BG_DARK);
         scroll.getViewport().setBackground(Theme.BG_DARK);
         contentPanel.add(scroll, BorderLayout.CENTER);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    // ===================== GOALS =====================
+    private void showGoals() {
+        setActive(btnGoals);
+        contentPanel.removeAll();
+        contentPanel.add(new GoalsPanel(currentUser), BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
